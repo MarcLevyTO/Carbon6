@@ -13,7 +13,11 @@ const MAX_LOAD_SIZE = 25;
 
 // POST /scheduleOrders
 router.post('/', async (req, res) => {
-  const unloadedOrders = await fetchAllUnloadedOrders();
+  const unloadedOrders = await fetchAllUnloadedOrders().catch((error) => {
+    console.error('Error fetching unloaded orders for scheduling:', error.stack);
+    res.status(500).json({ message: 'Error fetching unloaded orders' });
+  });
+
   let loadedCount = 0;
 
   // Sort orders by location
@@ -27,10 +31,16 @@ router.post('/', async (req, res) => {
   });
 
   // Get all valid departures
-  const departures = await fetchAllDepartures();
+  const departures = await fetchAllDepartures().catch((error) => {
+    console.error('Error fetching departures for scheduling:', error.stack);
+    res.status(500).json({ message: 'Error fetching departures for scheduling' });
+  });
 
   // Get count of how many orders are already loaded into each departure
-  const countByDepartures = await getCountOrdersByDepartureIds(departures.map((departure) => departure.id));
+  const countByDepartures = await getCountOrdersByDepartureIds(departures.map((departure) => departure.id)).catch((error) => {
+    console.error('Error fetching count of orders by departure:', error.stack);
+    res.status(500).json({ message: 'Error fetching count of orders by departure' });
+  });
   
   // Set remaining orders that can be loaded to each departure
   countByDepartures.forEach((countByDeparture) => {
